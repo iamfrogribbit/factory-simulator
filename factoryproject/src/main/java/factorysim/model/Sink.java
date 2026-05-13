@@ -2,7 +2,6 @@ package factorysim.model;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.HashMap;
 
 /**
@@ -28,6 +27,7 @@ public class Sink implements Tockable, StatResettable {
 
     //YOUR FIELDS GO HERE!
 
+    int tocks = 0;
     HashMap<String, Integer> itemQuantities;
     ArrayList<OutputSource> sources;
 
@@ -64,15 +64,16 @@ public class Sink implements Tockable, StatResettable {
      */
     @Override
     public void tock() {
+        tocks += 1;
         for (int i = 0; i < sources.size(); i++) {
             OutputSource source = sources.get(i);
-            int newQuantity = itemQuantities.get(source.itemType);
+            int newQuantity = itemQuantities.get(source.itemType());
             if (source.canPull()){
                 while (source.canPull()) {
                     newQuantity++;
                     source.pullItem();
                 }
-                itemQuantities.put(source.itemType, newQuantity);
+                itemQuantities.put(source.itemType(), newQuantity);
             }
         }
     }
@@ -86,7 +87,9 @@ public class Sink implements Tockable, StatResettable {
     public List<String> getItemTypes() {
         List<String> result = new ArrayList(sources.size());
         for (int i = 0; i< sources.size(); i++) {
-            result.add(i, sources.get(i).itemType());
+            if (itemQuantities.get(sources.get(i).itemType()) != 0) {
+                result.add(i, sources.get(i).itemType());
+            }
         }
         return result;
     }
@@ -104,7 +107,8 @@ public class Sink implements Tockable, StatResettable {
      * @return a double representing the average number of items of the given type consumed per minute since last reset.
      */
     public double getAvgItemsPerMinute(String itemType) {
-        // YOUR CODE HERE
+        double result = (itemQuantities.get(itemType) / tocks) * 60;
+        return result;
     }
 
     /** 
@@ -115,7 +119,8 @@ public class Sink implements Tockable, StatResettable {
      * since the last reset. 
      * */
     public long getItemsConsumed(String itemType) {
-        // YOUR CODE HERE
+        long result = itemQuantities.get(itemType);
+        return result;
     }
 
     /**
@@ -124,7 +129,16 @@ public class Sink implements Tockable, StatResettable {
      * @return boolean true if no items have been consumed since last reset, false otherwise.
      */
     public boolean isEmpty() {
-        // YOUR CODE HERE
+        if (itemQuantities.isEmpty()) {
+            return true;
+        }
+        Object[] amountConsumed = itemQuantities.values().toArray();
+        for (Object amount : amountConsumed) {
+            if ((Integer) amount > 0) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /** 
@@ -132,6 +146,8 @@ public class Sink implements Tockable, StatResettable {
      */
     @Override
     public void resetStatistics() {
-        // YOUR CODE HERE
+        for (OutputSource source : sources) {
+            itemQuantities.put(source.itemType(), 0);
+        }
     }
 }
