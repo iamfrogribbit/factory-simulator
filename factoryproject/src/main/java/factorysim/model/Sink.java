@@ -1,8 +1,8 @@
 package factorysim.model;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * Simulation model for a sink: a special consumer belt that accepts unlimited
@@ -39,7 +39,7 @@ public class Sink implements Tockable, StatResettable {
      */
     public Sink() {
         itemQuantities = new HashMap<>();
-        sources = new ArrayList<OutputSource>();
+        sources = new ArrayList<>();
     }
 
     /** 
@@ -52,9 +52,9 @@ public class Sink implements Tockable, StatResettable {
     * @param source Any object that implements the provided OutputSource interface.
     */
     public void addSource(OutputSource source) {
+        sources.add(source);
         if (itemQuantities.get(source.itemType()) == null) {
             itemQuantities.put(source.itemType(), 0);
-            sources.add(source);
         }
     }
 
@@ -64,7 +64,7 @@ public class Sink implements Tockable, StatResettable {
      */
     @Override
     public void tock() {
-        tocks += 1;
+        tocks ++;
         for (int i = 0; i < sources.size(); i++) {
             OutputSource source = sources.get(i);
             int newQuantity = itemQuantities.get(source.itemType());
@@ -86,11 +86,12 @@ public class Sink implements Tockable, StatResettable {
      */
     public List<String> getItemTypes() {
         List<String> result = new ArrayList(sources.size());
-        for (int i = 0; i< sources.size(); i++) {
-            if (itemQuantities.get(sources.get(i).itemType()) != 0) {
-                result.add(i, sources.get(i).itemType());
+        for (int i = 0; i < sources.size(); i++) {
+            if (itemQuantities.get(sources.get(i).itemType()) != 0 && !result.contains(sources.get(i).itemType())) {
+                result.add(sources.get(i).itemType());
             }
         }
+        
         return result;
     }
 
@@ -107,7 +108,8 @@ public class Sink implements Tockable, StatResettable {
      * @return a double representing the average number of items of the given type consumed per minute since last reset.
      */
     public double getAvgItemsPerMinute(String itemType) {
-        double result = (itemQuantities.get(itemType) / tocks) * 60;
+        if (tocks == 0) return 0.0;
+        double result = ((double) itemQuantities.get(itemType) / tocks) * 60;
         return result;
     }
 
@@ -119,6 +121,9 @@ public class Sink implements Tockable, StatResettable {
      * since the last reset. 
      * */
     public long getItemsConsumed(String itemType) {
+        if (itemQuantities.get(itemType) == null) {
+            return 0L;
+        }
         long result = itemQuantities.get(itemType);
         return result;
     }
@@ -146,6 +151,7 @@ public class Sink implements Tockable, StatResettable {
      */
     @Override
     public void resetStatistics() {
+        tocks = 0;
         for (OutputSource source : sources) {
             itemQuantities.put(source.itemType(), 0);
         }
