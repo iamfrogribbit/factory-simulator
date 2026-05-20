@@ -11,8 +11,8 @@ public class Machine implements Tickable, StatResettable {
 
     private final String name;
     private final int cooldown;
-    private List<InputPort> inputs;
-    private List<OutputPort> outputs;
+    private final List<InputPort> inputs;
+    private final List<OutputPort> outputs;
     private int remainingCooldown;
     private int ticks;
     private int utilisedTicks;

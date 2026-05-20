@@ -45,31 +45,28 @@ public class BeltBalancer implements Tockable, StatResettable {
         }
     }
 
-    private int calculateNextSourceIndex() {
-        nextSourceIndex = (nextSourceIndex + 1) % sources.size();
-        while (sources.get(nextSourceIndex).isEmpty()) {
-            nextSourceIndex = (nextSourceIndex + 1) % sources.size();
-        }
-        return nextSourceIndex;
-    }
-
-    private int calculateNextDestinationIndex() {
-        nextDestinationIndex = (nextDestinationIndex + 1) % destinations.size();
-        while (sources.get(nextDestinationIndex).isFull()) {
-            nextDestinationIndex = (nextDestinationIndex + 1) % destinations.size();
-        }
-        return nextDestinationIndex;
-    }
-
     @Override
     public void tock() {
         tocks++;
-        OutputPort newSource = sources.get(calculateNextSourceIndex());
-        InputPort newDestination = destinations.get(calculateNextDestinationIndex());
+
+        if (sources.isEmpty() || destinations.isEmpty()) return;
         
-        if (newSource.canPull() && newDestination.canReceive()) {
-            newSource.pullItem();
-            newDestination.push();
+        int checked = 0;
+        while (checked < sources.size() && !sources.get(nextSourceIndex).canPull()) {
+            nextSourceIndex = (nextSourceIndex + 1) % sources.size();
+            checked++;
+        }
+
+        int destChecked = 0;
+        while (destChecked < destinations.size() && !destinations.get(nextDestinationIndex).canReceive()) {
+            nextDestinationIndex = (nextDestinationIndex + 1) % destinations.size();
+            destChecked++;
+        }
+
+        if (sources.get(nextSourceIndex).canPull() 
+                && destinations.get(nextDestinationIndex).canReceive()) {
+            sources.get(nextSourceIndex).pullItem();
+            destinations.get(nextDestinationIndex).receiveItem();
             itemsTransferred++;
         }
     }
