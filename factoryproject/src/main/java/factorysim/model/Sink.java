@@ -27,9 +27,9 @@ public class Sink implements Tockable, StatResettable {
 
     //YOUR FIELDS GO HERE!
 
-    int tocks = 0;
+    private int tocks = 0;
     HashMap<String, Integer> itemQuantities;
-    ArrayList<OutputSource> sources;
+    List<OutputSource> sources;
 
     /** Initialise a Sink object. This takes no parameters.
      * This should set up any fields you decide the class should have to default values if relevant.

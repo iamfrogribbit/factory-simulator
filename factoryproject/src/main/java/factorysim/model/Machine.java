@@ -1,13 +1,20 @@
 package factorysim.model;
 import factorysim.config.MachineConfig;
-
-import java.util.ArrayList;
+import factorysim.config.PortConfig;
 import java.util.List;
 
 /**
  * Simulation model for a machine.
  */
-public class Machine {
+public class Machine implements Tickable, StatResettable {
+
+    private final String name;
+    private final int cooldown;
+    private List<InputPort> inputs;
+    private List<OutputPort> outputs;
+    private int remainingCooldown;
+    private int ticks;
+    private int utilisedTicks;
 
     /**
      * This is a suggested design for the Machine class if you are stuck
@@ -29,5 +36,80 @@ public class Machine {
      * - If we're tracking statistics, what other interface should this class perhaps implement?
      * 
      */
+    public Machine(MachineConfig machine) {
+        name = machine.getName();
+        cooldown = machine.getCooldown();
+        for (PortConfig input : machine.getInputConfigs()) {
+            inputs.add(new InputPort(input));
+        }
+        for (PortConfig output : machine.getOutputConfigs()) {
+            outputs.add(new OutputPort(output));
+        }
+        remainingCooldown = 0;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public double getUtilisation() {
+        if (ticks == 0) return 0.0;
+        return utilisedTicks / (double) ticks;
+    }
+
+    public boolean canActivate() {
+
+        if (!inputs.isEmpty()) {
+            for (InputPort input : inputs) {
+                if (!input.isFull()) return false;
+            }
+        }
+
+        for (OutputPort output : outputs) {
+            if (!output.isEmpty()) return false;
+        }
+
+        return remainingCooldown == 0;
+    }
+
+    private void consume() {
+        for (InputPort input : inputs) {
+            while (input.canPush()) input.push();
+        }
+    }
+
+    private void produce() {
+        for (OutputPort output : outputs) {
+            while (output.canPull()) output.pullItem();
+        }
+    }
+
+    public List<OutputPort> getOutputs() {
+        return outputs;
+    }
+
+    public List<InputPort> getInputs() {
+        return inputs;
+    }
+
+    @Override
+    public void tick() {
+        ticks++;
+        if (remainingCooldown > 0) {
+            remainingCooldown--;
+            utilisedTicks++;
+        } else if (canActivate()) {
+            consume();
+            produce();
+            remainingCooldown = cooldown;
+            utilisedTicks++;
+        }
+    }
+
+    @Override
+    public void resetStatistics() {
+        ticks = 0;
+        utilisedTicks = 0;
+    }
 
 }

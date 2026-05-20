@@ -1,9 +1,6 @@
 package factorysim.model;
 import factorysim.config.MachineConfig;
-import factorysim.config.PortConfig;
-
 import factorysim.stats.*;
-
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -16,8 +13,10 @@ import java.util.Map;
  */
 public final class FactoryNetworkImpl implements FactoryNetwork {
 
-    Sink sink;
-    // YOUR FIELDS HERE. You probably want to track the other main factory components
+    private final Sink sink;
+    private final List<Machine> machines;
+    private final List<BeltBalancer> belts;
+    private final Map<String, BeltBalancer> beltRegistry;
 
     /**
      * Establish a factory network.
@@ -31,7 +30,7 @@ public final class FactoryNetworkImpl implements FactoryNetwork {
      * machine input port, or tries to connect a belt to two ports with different types, 
      * the constructor should throw a BeltValidationException with an informative error message.
      */
-    public FactoryNetworkImpl(List<MachineConfig> machineConfigs) throws BeltValidationException{
+    public FactoryNetworkImpl(List<MachineConfig> machineConfigs) throws BeltValidationException {
 
         // The constructor should initialise your factory components (Sink has been initialised for you below). 
         // It should "wire" the components together (i.e. connect machine output ports to belts/sinks etc), 
@@ -41,15 +40,110 @@ public final class FactoryNetworkImpl implements FactoryNetwork {
         // a BeltValidationException. You might even find it useful to do this first,
         // It is up to you how to approach this/ what data structures you use.
         
-        Sink sink = new Sink();
+        sink = new Sink();
+        machines = new ArrayList<>();
+        belts = new ArrayList<>();
+        beltRegistry = new LinkedHashMap<>();
 
-        // YOUR CODE HERE (for all other components).
-        
+        for (MachineConfig machineConfig : machineConfigs) {
+            Machine machine = new Machine(machineConfig);
+            machines.add(machine);
+
+            for (OutputPort outputPort : machine.getOutputs()) {
+                String beltName = outputPort.getBeltName();
+                if (beltName.equals("sink")) {
+                    sink.addSource(outputPort);
+                } else {
+                    BeltBalancer belt = getOrCreateBelt(beltName, outputPort.itemType());
+                    belt.addSource(outputPort);
+                }
+            }
+
+            for (InputPort inputPort : machine.getInputs()) {
+                String beltName = inputPort.getBeltName();
+                if (beltName.equals("sink")) {
+                    throw new BeltValidationException("Belt 'sink' cannot connect to an input port");
+                } else{
+                    BeltBalancer belt = getOrCreateBelt(beltName, inputPort.getItemName());
+                    belt.addDestination(inputPort);
+                }
+            }
+        }
+    }
+
+    private BeltBalancer getOrCreateBelt(String name, String itemType) throws BeltValidationException {
+        if (beltRegistry.keySet().contains(name)) {
+            BeltBalancer belt = beltRegistry.get(name);
+            if (!belt.getItemType().equals(itemType)) {
+                throw new BeltValidationException("Belt " + name + " cannot carry both" + belt.getItemType() + " and " + itemType);
+            }
+            return belt;
+        } else {
+            BeltBalancer belt = new BeltBalancer(name, itemType);
+            beltRegistry.put(name, belt);
+            belts.add(belt);
+            return belt;
+        }
+    }
+
+    @Override
+    public void tick() {
+        for (Machine machine : machines) {
+            machine.tick();
+        }
+    }
+
+    @Override
+    public void tock() {
+        for (BeltBalancer belt : belts) {
+            belt.tock();
+        }
+
+        sink.tock();
+    }
+
+    @Override
+    public List<SinkEntry> getSinkStats() {
+        List<SinkEntry> result = new ArrayList();
+        for (String itemType : sink.getItemTypes()) {
+            result.add(new SinkEntry(itemType, sink.getAvgItemsPerMinute(itemType)));
+        }
+        return result;
+    }
+
+    @Override
+    public List<MachineStats> getMachineStats() {
+        List<MachineStats> result = new ArrayList();
+        for (Machine machine : machines) {
+            result.add(new MachineStats(machine.getName(), machine.getUtilisation()));
+        }
+        return result;
+    }
+
+    @Override
+    public List<BeltStats> getBeltStats() {
+        List<BeltStats> result = new ArrayList();
+        for (BeltBalancer belt : belts) {
+            result.add(new BeltStats(belt.getName(), belt.getItemType(), belt.getItemsPerMinute()));
+        }
+        return result;
+    }
+
+    @Override
+    public void resetStatistics() {
+        sink.resetStatistics();
+
+        for (Machine machine : machines) {
+            machine.resetStatistics();
+        }
+
+        for (BeltBalancer belt : belts) {
+            belt.resetStatistics();
+        }
     }
 
     // This class should implement the FactoryNetwork specification.
     // You should think about what methods this involves.
     // If you've used a good object oriented design on factory components, these methods might be quite simple.
-
 
 }
