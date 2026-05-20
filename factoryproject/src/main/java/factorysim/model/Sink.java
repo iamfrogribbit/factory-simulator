@@ -85,7 +85,7 @@ public class Sink implements Tockable, StatResettable {
      * Remember that an ArrayList is an implementation of List!
      */
     public List<String> getItemTypes() {
-        List<String> result = new ArrayList(sources.size());
+        List<String> result = new ArrayList<>(sources.size());
         for (int i = 0; i < sources.size(); i++) {
             if (itemQuantities.get(sources.get(i).itemType()) != 0 && !result.contains(sources.get(i).itemType())) {
                 result.add(sources.get(i).itemType());

@@ -104,7 +104,7 @@ public final class FactoryNetworkImpl implements FactoryNetwork {
 
     @Override
     public List<SinkEntry> getSinkStats() {
-        List<SinkEntry> result = new ArrayList();
+        List<SinkEntry> result = new ArrayList<>();
         for (String itemType : sink.getItemTypes()) {
             result.add(new SinkEntry(itemType, sink.getAvgItemsPerMinute(itemType)));
         }
@@ -113,7 +113,7 @@ public final class FactoryNetworkImpl implements FactoryNetwork {
 
     @Override
     public List<MachineStats> getMachineStats() {
-        List<MachineStats> result = new ArrayList();
+        List<MachineStats> result = new ArrayList<>();
         for (Machine machine : machines) {
             result.add(new MachineStats(machine.getName(), machine.getUtilisation()));
         }
@@ -122,7 +122,7 @@ public final class FactoryNetworkImpl implements FactoryNetwork {
 
     @Override
     public List<BeltStats> getBeltStats() {
-        List<BeltStats> result = new ArrayList();
+        List<BeltStats> result = new ArrayList<>();
         for (BeltBalancer belt : belts) {
             result.add(new BeltStats(belt.getName(), belt.getItemType(), belt.getItemsPerMinute()));
         }

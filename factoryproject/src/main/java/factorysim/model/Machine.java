@@ -1,6 +1,7 @@
 package factorysim.model;
 import factorysim.config.MachineConfig;
 import factorysim.config.PortConfig;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -39,6 +40,8 @@ public class Machine implements Tickable, StatResettable {
     public Machine(MachineConfig machine) {
         name = machine.getName();
         cooldown = machine.getCooldown();
+        inputs = new ArrayList<>();
+        outputs = new ArrayList<>();
         for (PortConfig input : machine.getInputConfigs()) {
             inputs.add(new InputPort(input));
         }
